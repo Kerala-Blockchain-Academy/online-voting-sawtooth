@@ -1,0 +1,15 @@
+## At client
+1) selector in bake.html
+2) send the selector value (item) in bake.ts
+3) in service.ts
+	recieve the value (item)
+	pass through encoder transformed into CSV
+	create method createAddress(item) ##passes the item value and create address
+4)selector in count.html
+5)send the selector value (item) in bake.ts through createAddress() method ## to set the address
+
+## At TP
+1) payload count equate to 3
+2) second payload set to item
+3) address set with adding the item hash 
+
