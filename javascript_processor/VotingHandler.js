@@ -33,7 +33,6 @@ const {TextEncoder, TextDecoder} = require('text-encoding/lib/encoding')
 const _hash = (x) => crypto.createHash('sha512').update(x).digest('hex').toLowerCase()
 var encoder = new TextEncoder('utf8')
 var decoder = new TextDecoder('utf8')
-const MIN_VALUE = 0
 const CJ_FAMILY = 'voting'
 const CJ_NAMESPACE = _hash(CJ_FAMILY).substring(0, 6)
 
@@ -42,12 +41,13 @@ const CJ_NAMESPACE = _hash(CJ_FAMILY).substring(0, 6)
 const _decodeRequest = (payload) =>
   new Promise((resolve, reject) => {
     payload = payload.toString().split(',')
-    if (payload.length === 4 && payload[0]==='voter-upload') {
+    if (payload.length === 5 && payload[0]==='voter-upload') {
       resolve({
         action: payload[0],
         name : payload[1],
         id : payload[2],
-	      password : payload[3]
+        password : payload[3],
+        station : payload[4]
       })
     }
     else if (payload.length === 4 && payload[0]==='candidate-upload') {
@@ -57,6 +57,21 @@ const _decodeRequest = (payload) =>
         name : payload[1],
         caSign : payload[2],
 	      station : payload[3]
+      })
+    }
+    else if (payload.length === 3 && payload[0]==='vote') {
+      console.log("works up to here... payload[0]=",payload[0])
+      resolve({
+        action: payload[0],
+        CandidateIndex : payload[1],
+        station:payload[2]
+      })
+    }
+    else if (payload.length === 2 && payload[0]==='setVote') {
+      console.log("works up to here... payload[0]=",payload[0])
+      resolve({
+        action: payload[0],
+        voterId : payload[1]
       })
     }
    
@@ -115,6 +130,7 @@ const voterUpload = (context, address, values) => (possibleAddressValues) => {
     name : values.name,
     id : values.id,
     password : values.password,
+    station : values.station,
     voted  : false
   }
   data = JSON.stringify(data);
@@ -143,6 +159,41 @@ const candidateUpload = (context, address, values) => (possibleAddressValues) =>
   data = JSON.stringify(data);
   console.log('final data:',data)
   return _setEntry(context, address, data)
+}
+
+//voting logic
+const vote = (context, address, values) => (possibleAddressValues) => {
+  let stateValueRep = possibleAddressValues[address]
+
+  if (stateValueRep == null || stateValueRep == ''){
+    throw new InvalidTransaction('state error')
+  }
+  else{
+   let data = decoder.decode(stateValueRep)
+    data = JSON.parse(data)
+    data.totalVoted=data.totalVoted + 1
+    data.candidates[values.CandidateIndex].count += 1
+  let updatedData = JSON.stringify(data);
+  console.log('the data :',data);
+  return _setEntry(context, address, updatedData)
+  }
+}
+
+//logic for set voter state
+const setVote = (context, address, values) => (possibleAddressValues) => {
+  let stateValueRep = possibleAddressValues[address]
+
+  if (stateValueRep == null || stateValueRep == ''){
+    throw new InvalidTransaction('state error')
+  }
+  else{
+   let data = decoder.decode(stateValueRep)
+    data = JSON.parse(data)
+    data.voted = true
+  let updatedData = JSON.stringify(data);
+  console.log('the data :',data);
+  return _setEntry(context, address, updatedData)
+  }
 }
 
 
@@ -205,6 +256,50 @@ class VotingHandler extends TransactionHandler{
       actionFn = candidateUpload
 
       }
+      //validation of vote
+      else if(action === 'vote'){
+        let CandidateIndex = update.CandidateIndex
+        console.log("the Index of the candidate:",CandidateIndex)
+        CandidateIndex = parseInt(CandidateIndex)
+
+        if (CandidateIndex === null || CandidateIndex === undefined) {
+          throw new InvalidTransaction('Value is required')
+        }
+        if (typeof CandidateIndex !== "number" ||  CandidateIndex.length < 1) {
+          throw new InvalidTransaction(`Value must contain only numbers` + `no less than 1`)
+        }
+        let station = update.station;
+        if(station === null || station === undefined){
+         throw new InvalidTransaction('Station is required')
+        }
+    
+        //calculating the address for candidate state
+        Address = CJ_NAMESPACE +_hash(station).substring(0,64)
+        console.log('address:',Address)
+         // Select the action to be performed
+        actionFn = vote
+  
+        }
+        else if(action === 'setVote'){
+          let id = update.voterId;
+          let idNum = parseInt(id);
+          console.log("ID :",idNum,'length:',id.length)
+
+          if( id.length != 16 ){
+          throw new InvalidTransaction( `must contain 16 digits`)
+          }
+      
+          //calculating the address for candidate state
+          Address = CJ_NAMESPACE +_hash(id).substring(0,64)
+          console.log('address:',Address)
+           // Select the action to be performed
+          actionFn = setVote
+    
+          }
+          else{
+            throw new InvalidTransaction('Unknown action!!')
+          }
+
     
 
    

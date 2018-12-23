@@ -19,8 +19,9 @@ export class VotersComponent implements OnInit {
     const voName = target.querySelector('#vo_name').value;
     const voId = target.querySelector('#vo_id').value;
     const voPassword = target.querySelector('#vo_password').value;
-    console.log("values:",voId,voName,voPassword);    
-    var uploadResult = await this.Data.sendData("voter-upload", [voName,voId,voPassword])//;.subscribe({});
+    const voStation = target.querySelector('#vo_station').value;
+    console.log("values:",voId,voName,voPassword,voStation);    
+    var uploadResult = await this.Data.sendData("voter-upload", [voName,voId,voPassword,voStation])//;.subscribe({});
     console.log("upload Result:", uploadResult)
     
     // this.Data.getUserDetails(username)

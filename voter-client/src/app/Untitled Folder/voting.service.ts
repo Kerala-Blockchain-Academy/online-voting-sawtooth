@@ -10,16 +10,19 @@ import * as Secp256k1PrivateKey from 'sawtooth-sdk/signing/secp256k1';
 @Injectable({
   providedIn: 'root'
 })
-export class UploaderService {
+export class VotingService {
 
   private signer: any;
   public publicKey: any;
+  public voterAddress: any;
   public address: any;
   public transactionHeaderBytes: any;
-  
+  public voId: any;
+
+  public STATION_NAME : "ATTINGAL01";
   private FAMILY_NAME = 'voting';
   private FAMILY_VERSION = '1.0';
-  private REST_API_BASE_URL = 'http://localhost:4200/api';
+  private REST_API_BASE_URL = 'http://localhost:4201/api';
 
   constructor() {
     const context = createContext('secp256k1');
@@ -27,11 +30,16 @@ export class UploaderService {
     const privateKey = context.newRandomPrivateKey();
     this.signer = new CryptoFactory(context).newSigner(privateKey);
     this.publicKey = this.signer.getPublicKey().asHex();
-    // Creating address
+
+    //creating address for LAC
+
+    this.address = this.hash("voting").substr(0, 6) + this.hash(this.STATION_NAME).substr(0, 64)
+    // Creating address for voter
    }
    public createAddress(item){
-    this.address =  this.hash("voting").substr(0, 6) + this.hash(item).substr(0, 64)
-    console.log("Storing at: " + this.address);
+    this.voterAddress =  this.hash("voting").substr(0, 6) + this.hash(item).substr(0, 64)
+    console.log("Storing at: " + this.voterAddress);
+    this.voId = item;
   }
   public clearLogin(): boolean {
     console.log("Cleared the login credentials");
@@ -45,13 +53,9 @@ export class UploaderService {
     return createHash('sha512').update(v).digest('hex');
   }
 
-  public async sendData(action, values) {
+  public async sendData(action, value) {
     // Encode the payload
-    const payload = this.getEncodedData(action, values);
-    if(action == 'voter-upload')
-      this.createAddress(values[1]);
-    else if(action == 'candidate-upload')
-      this.createAddress(values[2]);
+    const payload = this.getEncodedData(action, [value,this.STATION_NAME,this.voId]);
     const transactionsList = this.getTransactionsList(payload);
     const batchList = this.getBatchList(transactionsList);
 
@@ -106,12 +110,7 @@ export class UploaderService {
 
 
   private getEncodedData(action,values): any {
-    let data : any;
-    if(action == 'voter-upload')
-      data = action + "," + values[0] + "," +values[1] + "," +values[2] + ","+values[3];
-    else
-      data = action + "," + values[0] + "," +values[1] + "," +values[2]
-    
+    const data = action + "," + values[0] + "," +values[1] + "," +values[2];
     console.log("the data:",data)
     return new TextEncoder('utf8').encode(data);
   }
@@ -168,7 +167,7 @@ export class UploaderService {
   /*-------------Creating transactions & batches--------------------*/
   private getTransactionsList(payload): any {
     // Create transaction header
-    const transactionHeader = this.getTransactionHeaderBytes([this.address], [this.address], payload);
+    const transactionHeader = this.getTransactionHeaderBytes([this.address,this.voterAddress], [this.address,this.voterAddress], payload);
     // Create transaction
     const transaction = this.getTransaction(transactionHeader, payload);
     // Transaction list
@@ -242,9 +241,6 @@ export class UploaderService {
     }).finish();
 
     return batchListBytes;
-  }
-  public test(){
-    console.log("test works!!!");
   }
 
   

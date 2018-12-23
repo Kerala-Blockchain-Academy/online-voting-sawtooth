@@ -10,16 +10,20 @@ import * as Secp256k1PrivateKey from 'sawtooth-sdk/signing/secp256k1';
 @Injectable({
   providedIn: 'root'
 })
-export class UploaderService {
+export class VotingService {
 
   private signer: any;
   public publicKey: any;
   public address: any;
   public transactionHeaderBytes: any;
-  
+  public station_name = "ATTINGAL01";
+  public auth = false;
+  public voId = '';
+  public voName = ''; 
+ 
   private FAMILY_NAME = 'voting';
   private FAMILY_VERSION = '1.0';
-  private REST_API_BASE_URL = 'http://localhost:4200/api';
+  private REST_API_BASE_URL = 'http://localhost:4201/api';
 
   constructor() {
     const context = createContext('secp256k1');
@@ -30,8 +34,20 @@ export class UploaderService {
     // Creating address
    }
    public createAddress(item){
-    this.address =  this.hash("voting").substr(0, 6) + this.hash(item).substr(0, 64)
-    console.log("Storing at: " + this.address);
+     if(item == ''){
+      this.address =  this.hash("voting").substr(0, 6) + this.hash(this.station_name).substr(0, 64)
+      console.log("Storing at: " + this.address);
+     }
+     else{
+      this.address =  this.hash("voting").substr(0, 6) + this.hash(item).substr(0, 64)
+      console.log("Storing at: " + this.address);
+     }
+    
+  }
+  //marking that the voter is voted
+  public async setVote(){
+    this.createAddress(this.voId);
+    await this.sendData('setVote',this.voId)
   }
   public clearLogin(): boolean {
     console.log("Cleared the login credentials");
@@ -45,13 +61,14 @@ export class UploaderService {
     return createHash('sha512').update(v).digest('hex');
   }
 
-  public async sendData(action, values) {
+  public async sendData(action, value) {
     // Encode the payload
-    const payload = this.getEncodedData(action, values);
-    if(action == 'voter-upload')
-      this.createAddress(values[1]);
-    else if(action == 'candidate-upload')
-      this.createAddress(values[2]);
+
+    const payload = this.getEncodedData(action, value, this.station_name);
+    if(action == 'vote')
+      this.createAddress(this.station_name);
+    else(action == 'voterState')
+      this.createAddress(value);
     const transactionsList = this.getTransactionsList(payload);
     const batchList = this.getBatchList(transactionsList);
 
@@ -105,13 +122,14 @@ export class UploaderService {
   }
 
 
-  private getEncodedData(action,values): any {
+  private getEncodedData(action,value,station_name): any {
     let data : any;
-    if(action == 'voter-upload')
-      data = action + "," + values[0] + "," +values[1] + "," +values[2] + ","+values[3];
-    else
-      data = action + "," + values[0] + "," +values[1] + "," +values[2]
-    
+    if(action == 'vote'){
+      data = action + "," + value + "," +station_name;
+    }
+    else{
+      data = action + "," + value;
+    }
     console.log("the data:",data)
     return new TextEncoder('utf8').encode(data);
   }
