@@ -3,7 +3,7 @@ INSTRUCTIONS FOR SETTING-UP THE APPLICATION
 
 Requirements:
 
-OS: Ubuntu 16.04 (Recomented)
+OS: Ubuntu 16.04 (Recommented)
 1) angular-cli version 6.1.0 or grater
 2) nodejs version 8.0 stable
    npm latest
