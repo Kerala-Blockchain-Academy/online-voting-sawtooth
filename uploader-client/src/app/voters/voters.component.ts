@@ -23,6 +23,10 @@ export class VotersComponent implements OnInit {
     console.log("values:",voId,voName,voPassword,voStation);    
     var uploadResult = await this.Data.sendData("voter-upload", [voName,voId,voPassword,voStation])//;.subscribe({});
     console.log("upload Result:", uploadResult)
+    //resetting the fields
+    target.querySelector('#vo_name').value='';
+    target.querySelector('#vo_id').value='';
+    target.querySelector('#vo_password').value='';
     
     // this.Data.getUserDetails(username)
   }

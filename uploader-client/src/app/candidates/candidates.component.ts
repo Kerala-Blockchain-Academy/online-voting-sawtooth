@@ -23,7 +23,9 @@ export class CandidatesComponent implements OnInit {
     var uploadResult = await this.Data.sendData("candidate-upload", [caName,caId,station])//;.subscribe({});
     console.log("upload Result:", uploadResult)
     
-    // this.Data.getUserDetails(username)
+    //resetting the fields
+    target.querySelector('#ca_name').value='';
+    target.querySelector('#ca_id').value='';
   }
 }
 

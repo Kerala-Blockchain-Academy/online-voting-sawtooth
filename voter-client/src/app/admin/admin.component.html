@@ -1,0 +1,19 @@
+<button (click)="showResult()"><h2>PUBLISH</h2></button>
+<div id="show">
+    <h2>Total voted = {{totCount}}</h2>
+    <table class="rwd-table">
+            <tr>
+              <th>Number</th>
+              <th>Name</th>
+              <th>Sign</th>
+              <th>Count</th>
+            </tr>
+            <tr *ngFor="let item of candidateDetails; index as i;">
+              <td data-th>{{i+1}}</td>
+              <td data-th>{{item.name}}</td>
+              <td data-th>{{item.sign}}</td>
+              <td data-th>{{item.count}}</td>
+            </tr>
+
+          </table>
+</div>
