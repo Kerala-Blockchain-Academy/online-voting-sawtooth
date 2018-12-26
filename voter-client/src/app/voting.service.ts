@@ -66,8 +66,8 @@ export class VotingService {
 
     const payload = this.getEncodedData(action, value, this.station_name);
     if(action == 'vote')
-      this.createAddress(this.station_name);
-    else(action == 'voterState')
+      this.createAddress('');
+    else if(action == 'voterState')
       this.createAddress(value);
     const transactionsList = this.getTransactionsList(payload);
     const batchList = this.getBatchList(transactionsList);
